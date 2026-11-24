@@ -2,7 +2,7 @@
 
 A simple, free invoice maker that runs entirely in your browser. No account, no server, no install.
 
-**Use it here:** https://YOUR-USERNAME.github.io/invoice-generator/
+**Use it here:** https://anjelgrcc.github.io/invoice-generator/
 
 ## What it does
 
