@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<!-- Copyright (c) 2026 Angelle Marie Garcia. All rights reserved. See the LICENSE file. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Invoice generator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#eef0f4;--panel:#fff;--ink:#1b2130;--muted:#5d667a;--line:#d9dde6;--field:#f6f7fa;--accent:#2b4acb;--accent-ink:#fff;--paid:#17794a;--due:#a8530a;--late:#b42318;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151c;--panel:#1b202b;--ink:#e8ebf2;--muted:#9aa3b5;--line:#2c3342;--field:#141822;--accent:#7b93ff;--accent-ink:#0d1226;--paid:#4cc58a;--due:#f0a35a;--late:#ff8a7d}}
+:root[data-theme="dark"]{--bg:#12151c;--panel:#1b202b;--ink:#e8ebf2;--muted:#9aa3b5;--line:#2c3342;--field:#141822;--accent:#7b93ff;--accent-ink:#0d1226;--paid:#4cc58a;--due:#f0a35a;--late:#ff8a7d}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 20px;background:var(--panel);border-bottom:1px solid var(--line)}
+.bar h1{font-size:18px;margin:0 12px 0 0;font-weight:700}
+.bar select{max-width:260px;flex:1 1 180px}
+.sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--field);border-radius:8px;padding:7px 13px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
+.btn.danger.arm{background:var(--late);color:#fff;border-color:var(--late)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--field);padding:7px 14px;cursor:pointer}
+.seg button[aria-pressed="true"].u{background:var(--due);color:#fff}
+.seg button[aria-pressed="true"].p{background:var(--paid);color:#fff}
+.badge{font-size:13px;color:var(--late);font-weight:500}
+.app{display:grid;gap:20px;padding:20px;max-width:1280px;margin:0 auto;grid-template-columns:minmax(0,1fr)}
+@media (min-width:960px){.app{grid-template-columns:minmax(340px,430px) minmax(0,1fr);align-items:start}}
+.editor{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 18px 18px}
+fieldset{border:0;border-bottom:1px solid var(--line);margin:0;padding:16px 0}
+fieldset:last-of-type{border-bottom:0}
+legend{font-weight:700;padding:0;margin-bottom:8px;float:left;width:100%}
+fieldset>legend+*{clear:both}
+.g{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.g .w{grid-column:1/-1}
+label{display:block;font-size:13px;color:var(--muted)}
+label input,label select,label textarea{display:block;width:100%;margin-top:3px;padding:8px 10px;border:1px solid var(--line);background:var(--field);border-radius:8px;color:var(--ink);font-size:15px}
+textarea{resize:vertical;min-height:58px}
+.note{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.row{display:grid;gap:8px;grid-template-columns:76px minmax(90px,120px) minmax(0,1fr) 28px;grid-template-areas:"p p p x" "d d d d" "q r a a";padding:12px;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;align-items:end}
+.row input,.row select{width:100%;padding:8px;border:1px solid var(--line);background:var(--field);border-radius:8px;color:var(--ink)}
+.row .p{grid-area:p}.row .d{grid-area:d}.row .q{grid-area:q}.row .r{grid-area:r}.row .x{grid-area:x;border:0;background:none;color:var(--muted);cursor:pointer;font-size:18px}
+.row .x:hover{color:var(--late)}
+.row .a{grid-area:a;text-align:right;font-weight:500;padding-bottom:8px}
+.cl{border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:var(--field)}
+.cl summary{padding:9px 12px;cursor:pointer;font-weight:500}
+.cl .g{padding:0 12px 12px}
+.cl .btn{margin:0 12px 12px}
+.notes+.notes{margin-top:16px}
+body[data-view="dash"] .ed,body[data-view="dash"] .app{display:none}
+body[data-view="edit"] #dash{display:none}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.dash{max-width:1100px;margin:0 auto;padding:20px}
+.dh{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.dh h2{margin:0;font-size:22px}
+.stats{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:20px}
+.stat,.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.stat{padding:14px 16px}
+.panel{margin-bottom:20px;padding:14px 0 6px}
+.panel h3{margin:0 16px 8px;font-size:16px}
+.stat .k{font-size:13px;color:var(--muted)}
+.stat .v{font-size:22px;font-weight:700;line-height:1.35}
+.stat .v.od{color:var(--late)}.stat .v.pd{color:var(--paid)}
+.stat .s{font-size:12.5px;color:var(--muted)}
+.fl{display:flex;flex-wrap:wrap;gap:10px;padding:0 16px 12px}
+.fl select{padding:7px 10px;border:1px solid var(--line);background:var(--field);border-radius:8px}
+.tw{overflow-x:auto}
+.li{display:grid;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);min-width:860px;grid-template-columns:90px minmax(150px,1.6fr) 96px 96px 120px 110px 250px}
+.li.bc{min-width:520px;grid-template-columns:minmax(140px,1.5fr) 1fr 1fr 70px}
+.li.h{font-size:13px;color:var(--muted)}
+.li .sm{font-size:12.5px;color:var(--muted)}
+.li .ac{display:flex;gap:6px;justify-content:flex-end}
+.li .btn{padding:4px 10px;font-size:13.5px}
+.pill{display:inline-block;padding:1px 10px;border-radius:99px;font-size:12.5px;font-weight:500;border:1px solid currentColor}
+.pill.pd{color:var(--paid)}.pill.up{color:var(--due)}.pill.od{color:var(--late)}
+.none{padding:20px 16px;color:var(--muted)}
+.stage{min-width:0}
+.paper{position:relative;background:#fff;color:#1b2130;max-width:780px;margin:0 auto;padding:48px 44px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.12),0 12px 32px rgba(0,0,0,.1);min-height:560px}
+.paper h1{margin:0 0 8px;font-size:34px;line-height:1;font-weight:700;letter-spacing:-.02em;color:#2b4acb}
+.paper h2{margin:0 0 4px;font-size:20px}
+.ph{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.ph .ttl{text-align:right}
+.pre{white-space:pre-line}
+.small{font-size:13.5px;color:#4b5468}
+dl{margin:0;display:grid;grid-template-columns:auto auto;gap:2px 14px;justify-content:end;font-size:14px}
+dt{color:#4b5468}dd{margin:0;font-weight:500;text-align:right}
+.bill{margin:32px 0 24px}
+.bill b{display:block;font-size:13px;color:#4b5468;font-weight:500;margin-bottom:2px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-weight:500;font-size:13px;color:#4b5468;padding:8px 0;border-bottom:2px solid #1b2130}
+td{padding:10px 0;border-bottom:1px solid #e3e6ee;vertical-align:top}
+th.n,td.n{text-align:right;white-space:nowrap;padding-left:14px}
+.tot{margin:18px 0 0 auto;width:min(300px,100%);font-size:14.5px}
+.tot div{display:flex;justify-content:space-between;padding:4px 0}
+.tot .gt{border-top:2px solid #1b2130;margin-top:6px;padding-top:10px;font-size:20px;font-weight:700}
+.notes{margin-top:36px;font-size:13.5px;color:#4b5468}
+.notes b{display:block;color:#1b2130;font-weight:500}
+.stamp{position:absolute;right:44px;top:150px;border:3px solid #17794a;color:#17794a;padding:2px 16px;font-size:30px;font-weight:700;border-radius:6px;transform:rotate(-8deg);opacity:.8}
+.empty{color:#8a92a5;text-align:center;padding:20px 0}
+@media (max-width:560px){.paper{padding:28px 20px}.stamp{right:20px}.ph .ttl{text-align:left}dl{justify-content:start}}
+@page{margin:14mm}
+@media print{
+ :root{padding:0}
+ html,body{background:#fff!important}
+ .bar,.editor,.hint{display:none!important}
+ .app{display:block;padding:0;max-width:none}
+ .paper{box-shadow:none;border-radius:0;padding:0;max-width:none;min-height:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .stamp{right:0}
+}
+</style>
+</head>
+<body>
+<div class="bar">
+ <h1>Invoices</h1>
+ <div class="seg" role="group" aria-label="View"><button id="vd" aria-pressed="true">Dashboard</button><button id="ve" aria-pressed="false">Editor</button></div>
+ <select class="ed" id="pick" aria-label="Saved invoices"></select>
+ <button class="btn ed" id="new">New</button>
+ <button class="btn ed" id="dup">Duplicate</button>
+ <button class="btn danger ed" id="del">Delete</button>
+ <span class="sp"></span>
+ <span class="badge ed" id="late"></span>
+ <div class="seg ed" role="group" aria-label="Payment status">
+  <button class="u" id="su" aria-pressed="true">Unpaid</button>
+  <button class="p" id="sp" aria-pressed="false">Paid</button>
+ </div>
+ <button class="btn primary ed" id="print">Print or save PDF</button>
+</div>
+
+<main class="dash" id="dash">
+ <div class="dh"><h2>Dashboard</h2><button class="btn primary" id="dnew">New invoice</button></div>
+ <div class="stats" id="stats"></div>
+ <section class="panel">
+  <div class="fl">
+   <div class="seg" id="fstat" role="group" aria-label="Filter by status"><button data-s="all">All</button><button data-s="unpaid">Unpaid</button><button data-s="overdue">Overdue</button><button data-s="paid">Paid</button></div>
+   <select id="fcl" aria-label="Filter by client"></select>
+  </div>
+  <div class="tw"><div id="ilist"></div></div>
+ </section>
+ <section class="panel"><h3>By client</h3><div class="tw"><div id="bycl"></div></div></section>
+</main>
+
+<div class="app">
+ <form class="editor" id="form" onsubmit="return false" autocomplete="off">
+  <fieldset><legend>Your business</legend>
+   <div class="g">
+    <label class="w">Business name<input data-b="name" placeholder="Studio name"></label>
+    <label>Email<input data-b="email" type="email"></label>
+    <label>Phone<input data-b="phone"></label>
+    <label class="w">Website<input data-b="website"></label>
+    <label class="w">Address<textarea data-b="address"></textarea></label>
+    <label class="w">Tax or registration ID<input data-b="taxId"></label>
+    <label class="w">Payment details<textarea data-b="payment" placeholder="Payment link, bank details, etc."></textarea></label>
+   </div>
+   <p class="note">Saved once and reused on every invoice.</p>
+  </fieldset>
+  <fieldset><legend>Client</legend>
+   <div class="g">
+    <label class="w">Client<select id="csel"></select></label>
+   </div>
+  </fieldset>
+  <fieldset><legend>Saved clients</legend>
+   <div id="clients"></div>
+   <button class="btn" id="addc" type="button">Add client</button>
+   <p class="note">Edit a client or its projects here. Changes carry over to every invoice for that client.</p>
+  </fieldset>
+  <fieldset><legend>Invoice details</legend>
+   <div class="g">
+    <label>Invoice number<input data-f="number"></label>
+    <label>Currency<select data-f="currency" id="cur"></select></label>
+    <label>Issue date<input data-f="issue" type="date"></label>
+    <label>Due date<input data-f="due" type="date"></label>
+    <label>Tax rate (%)<input data-f="tax" type="number" min="0" step="0.01" inputmode="decimal"></label>
+   </div>
+  </fieldset>
+  <fieldset><legend>Line items</legend>
+   <div id="items"></div>
+   <button class="btn" id="add" type="button">Add line item</button>
+  </fieldset>
+  <fieldset><legend>Notes</legend>
+   <label class="w">Payment terms or thank-you note<textarea data-f="notes"></textarea></label>
+  </fieldset>
+ </form>
+
+ <div class="stage">
+  <div class="paper" id="paper"></div>
+  <p class="note hint" style="text-align:center">In the print dialog, choose “Save as PDF” as the destination. Invoices are saved in this browser.</p>
+ </div>
+</div>
+
+<script>
+var KEY="invoice-generator-v1",S,$=function(s){return document.querySelector(s)};
+var CURS=["USD","EUR","GBP","PHP","AUD","CAD","SGD","JPY","INR","NZD","CHF","HKD"];
+function uid(){return Math.random().toString(36).slice(2,9)}
+var DEF={name:"",email:"",phone:"",website:"",address:"",taxId:"",payment:""};
+var SEED=[];
+function today(){return new Date().toLocaleDateString("en-CA")}
+function plus(d,n){var x=new Date(d+"T00:00");x.setDate(x.getDate()+n);return x.toLocaleDateString("en-CA")}
+function nextNumber(){var best=null,bn=-1;(S&&S.invoices||[]).forEach(function(i){var m=String(i.number).match(/^(.*?)(\d+)\s*$/);if(m&&+m[2]>bn){bn=+m[2];best=m}});return best?best[1]+String(bn+1).padStart(best[2].length,"0"):"INV-0001"}
+function blank(){
+ var t=today();
+ return {id:uid(),number:nextNumber(),issue:t,due:plus(t,14),currency:(S&&S.invoices.length&&S.invoices[S.invoices.length-1].currency)||"USD",tax:0,status:"unpaid",clientId:"",project:"",client:{name:"",email:"",address:""},items:[{id:uid(),desc:"",qty:1,rate:0}],notes:"Payment due within 14 days. Thank you for your business."};
+}
+function load(){
+ try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+ if(!S||!S.invoices||!S.invoices.length){S={business:{},clients:null,invoices:[],cur:null};S.invoices.push(blank());S.cur=S.invoices[0].id}
+ var bz=S.business=S.business||{};
+ if(!bz.name&&!bz.email)Object.keys(DEF).forEach(function(k){bz[k]=DEF[k]});
+ Object.keys(DEF).forEach(function(k){if(bz[k]==null)bz[k]=""});
+ if(!S.clients)S.clients=JSON.parse(JSON.stringify(SEED));
+ S.invoices.forEach(function(i){if(i.clientId==null)i.clientId="";if(i.project==null)i.project="";i.items.forEach(function(it){if(it.project==null)it.project=i.project||""})});
+ if(!cur())S.cur=S.invoices[0].id;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function cur(){return S.invoices.filter(function(i){return i.id===S.cur})[0]}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function num(v){var n=parseFloat(v);return isFinite(n)?n:0}
+function r2(n){return Math.round(n*100)/100}
+function money(n,c){try{return new Intl.NumberFormat(undefined,{style:"currency",currency:c}).format(n)}catch(e){return c+" "+n.toFixed(2)}}
+function fmtDate(d){if(!d)return "–";var x=new Date(d+"T00:00");return isNaN(x)?"–":x.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"})}
+function totals(inv){
+ var sub=0;inv.items.forEach(function(it){sub+=r2(num(it.qty)*num(it.rate))});
+ sub=r2(sub);var tax=r2(sub*num(inv.tax)/100);return{sub:sub,tax:tax,total:r2(sub+tax)};
+}
+function lines(s){return esc(s).replace(/\n/g,"<br>")}
+
+function fill(){
+ var inv=cur();
+ document.querySelectorAll("[data-b]").forEach(function(e){e.value=S.business[e.dataset.b]||""});
+ document.querySelectorAll("[data-f]").forEach(function(e){e.value=inv[e.dataset.f]})
+ renderItems();renderClients();
+}
+function projOpts(sel){var c=findClient(cur().clientId),pj=c?c.projects.slice():[];if(sel&&pj.indexOf(sel)<0)pj.push(sel);return '<option value="">No project</option>'+pj.map(function(p){return '<option value="'+esc(p)+'"'+(p===sel?' selected':'')+'>'+esc(p)+'</option>'}).join("")}
+function renderItems(){
+ var inv=cur();
+ $("#items").innerHTML=inv.items.map(function(it){
+  return '<div class="row" data-id="'+it.id+'"><select class="p" data-i="project" aria-label="Project">'+projOpts(it.project)+'</select><button class="x" type="button" aria-label="Remove line item">×</button><input class="d" data-i="desc" placeholder="Description (optional)" aria-label="Description" value="'+esc(it.desc)+'"><label class="q">Qty<input data-i="qty" type="number" min="0" step="any" inputmode="decimal" value="'+esc(it.qty)+'"></label><label class="r">Rate<input data-i="rate" type="number" min="0" step="any" inputmode="decimal" value="'+esc(it.rate)+'"></label><div class="a">'+money(r2(num(it.qty)*num(it.rate)),inv.currency)+'</div></div>';
+ }).join("");
+}
+function renderClients(){
+ $("#clients").innerHTML=S.clients.length?S.clients.map(function(c){
+  return '<details class="cl" data-cid="'+c.id+'"><summary>'+esc(c.name||"Unnamed client")+'</summary><div class="g"><label class="w">Name<input data-m="name" value="'+esc(c.name)+'"></label><label class="w">Email<input data-m="email" type="email" value="'+esc(c.email)+'"></label><label class="w">Billing address<textarea data-m="address">'+esc(c.address)+'</textarea></label><label class="w">Projects (one per line)<textarea data-m="projects">'+esc(c.projects.join("\n"))+'</textarea></label></div><button class="btn danger" type="button" data-delc>Delete client</button></details>';
+ }).join(""):'<p class="note">No clients yet. Add one to pick it on invoices.</p>';
+}
+function findClient(id){return S.clients.filter(function(x){return x.id===id})[0]}
+function clientOf(i){return findClient(i.clientId)||i.client}
+function syncClient(i){
+ var c=findClient(i.clientId);
+ if(c)i.client={name:c.name,email:c.email,address:c.address};
+ var cs=$("#csel");
+ cs.innerHTML='<option value="">Choose a client</option>'+S.clients.map(function(x){return '<option value="'+x.id+'">'+esc(x.name||"Unnamed client")+'</option>'}).join("");
+ cs.value=i.clientId;
+
+}
+function link(h){return h.replace(/\b((?:https?:\/\/)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}\/[^\s<]*)/gi,function(u){return '<a href="'+(/^https?:/i.test(u)?u:"https://"+u)+'" target="_blank" rel="noopener" style="color:inherit">'+u+'</a>'})}
+var F={status:"all",client:""};
+function pnames(i){var s=[];i.items.forEach(function(it){var n=(it.project||"").replace(/\s*\(.*\)$/,"");if(n&&s.indexOf(n)<0)s.push(n)});return s}
+function isOd(i){return i.status!=="paid"&&i.due&&i.due<today()}
+function setStatus(i,s){i.status=s;i.paidOn=s==="paid"?today():""}
+function sums(l){var o={};l.forEach(function(i){o[i.currency]=(o[i.currency]||0)+totals(i).total});return o}
+function fs(o){var k=Object.keys(o).sort();return k.length?k.map(function(c){return money(r2(o[c]),c)}).join("<br>"):"–"}
+function renderDash(){
+ var all=S.invoices.filter(function(i){return totals(i).total>0||i.clientId});
+ var base=all.filter(function(i){return !F.client||i.clientId===F.client});
+ var unp=base.filter(function(i){return i.status!=="paid"}),odl=unp.filter(isOd),pdl=base.filter(function(i){return i.status==="paid"});
+ function st(l,list,cls){return '<div class="stat"><div class="k">'+l+'</div><div class="v '+(cls||"")+'">'+fs(sums(list))+'</div><div class="s">'+list.length+(list.length===1?" invoice":" invoices")+'</div></div>'}
+ $("#stats").innerHTML=st("Outstanding",unp)+st("Overdue",odl,"od")+st("Paid",pdl,"pd")+st("Total invoiced",base);
+ $("#fcl").innerHTML='<option value="">All clients</option>'+S.clients.map(function(c){return '<option value="'+c.id+'">'+esc(c.name||"Unnamed client")+'</option>'}).join("");
+ $("#fcl").value=F.client;
+ document.querySelectorAll("#fstat button").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.s===F.status))});
+ var list=base.filter(function(i){return F.status==="all"||(F.status==="paid"&&i.status==="paid")||(F.status==="unpaid"&&i.status!=="paid")||(F.status==="overdue"&&isOd(i))});
+ list.sort(function(a,b){return (b.issue||"").localeCompare(a.issue||"")||String(b.number).localeCompare(String(a.number))});
+ $("#ilist").innerHTML=list.length?'<div class="li h"><span>Number</span><span>Client</span><span>Issued</span><span>Due</span><span>Amount</span><span>Status</span><span></span></div>'+list.map(function(i){
+  var p=i.status==="paid",o=isOd(i);
+  return '<div class="li" data-id="'+i.id+'"><strong>'+esc(i.number)+'</strong><div>'+esc(clientOf(i).name||"No client")+'<div class="sm">'+esc(pnames(i).join(", "))+'</div></div><span>'+fmtDate(i.issue)+'</span><span>'+fmtDate(i.due)+'</span><strong>'+money(totals(i).total,i.currency)+'</strong><div><span class="pill '+(p?"pd":o?"od":"up")+'">'+(p?"Paid":o?"Overdue":"Unpaid")+'</span>'+(p&&i.paidOn?'<div class="sm">'+fmtDate(i.paidOn)+'</div>':'')+'</div><span class="ac"><button class="btn" data-a="open">Open</button><button class="btn" data-a="tog">'+(p?"Mark unpaid":"Mark paid")+'</button><button class="btn" data-a="del">Delete</button></span></div>';
+ }).join(""):'<div class="none">'+(all.length?"No invoices match these filters.":"No invoices yet. Create your first one.")+'</div>';
+ var rows=S.clients.map(function(c){return {c:c,l:all.filter(function(i){return i.clientId===c.id})}}).filter(function(x){return x.l.length});
+ $("#bycl").innerHTML=rows.length?'<div class="li bc h"><span>Client</span><span>Outstanding</span><span>Paid</span><span>Invoices</span></div>'+rows.map(function(x){return '<div class="li bc"><strong>'+esc(x.c.name||"Unnamed client")+'</strong><div>'+fs(sums(x.l.filter(function(i){return i.status!=="paid"})))+'</div><div>'+fs(sums(x.l.filter(function(i){return i.status==="paid"})))+'</div><span>'+x.l.length+'</span></div>'}).join(""):'<div class="none">Client totals appear once you have invoices.</div>';
+}
+function setView(v){document.body.dataset.view=v;$("#vd").setAttribute("aria-pressed",String(v==="dash"));$("#ve").setAttribute("aria-pressed",String(v==="edit"));if(v==="dash")renderDash();else{fill();refresh()}window.scrollTo(0,0)}
+function refresh(){
+ var inv=cur(),t=totals(inv),paid=inv.status==="paid",c=inv.currency,b=S.business;
+ syncClient(inv);
+ document.querySelectorAll(".row").forEach(function(row){
+  var it=inv.items.filter(function(x){return x.id===row.dataset.id})[0];
+  if(it)row.querySelector(".a").textContent=money(r2(num(it.qty)*num(it.rate)),c);
+ });
+ var rows=inv.items.filter(function(i){return i.desc||i.project||num(i.rate)||num(i.qty)!==1});
+ var body=rows.length?rows.map(function(it){return '<tr><td>'+(it.project?'<strong>'+esc(it.project)+'</strong>':'')+(it.project&&it.desc?'<br>':'')+(it.desc?'<span class="small">'+lines(it.desc)+'</span>':'')+'</td><td class="n">'+esc(num(it.qty))+'</td><td class="n">'+money(num(it.rate),c)+'</td><td class="n">'+money(r2(num(it.qty)*num(it.rate)),c)+'</td></tr>'}).join(""):'<tr><td colspan="4" class="empty">Add a line item to see it here.</td></tr>';
+ var contact=[b.email,b.phone,b.website,b.taxId?("Tax ID: "+b.taxId):""].filter(Boolean).map(function(x){return link(esc(x))}).join("<br>");
+ var cl=clientOf(inv);
+ $("#paper").innerHTML=(paid?'<div class="stamp">Paid</div>':'')+
+  '<div class="ph"><div><h2>'+esc(b.name||"Your business")+'</h2><div class="small">'+lines(b.address)+(b.address&&contact?"<br>":"")+contact+'</div></div>'+
+  '<div class="ttl"><h1>Invoice</h1><dl><dt>Number</dt><dd>'+esc(inv.number)+'</dd><dt>Issued</dt><dd>'+fmtDate(inv.issue)+'</dd><dt>Due</dt><dd>'+fmtDate(inv.due)+'</dd></dl></div></div>'+
+  '<div class="bill"><b>Billed to</b><div><strong>'+esc(cl.name||"Client name")+'</strong></div><div class="small">'+lines(cl.address)+(cl.address&&cl.email?"<br>":"")+esc(cl.email)+'</div></div>'+
+  '<table><thead><tr><th>Description</th><th class="n">Qty</th><th class="n">Rate</th><th class="n">Amount</th></tr></thead><tbody>'+body+'</tbody></table>'+
+  '<div class="tot"><div><span>Subtotal</span><span>'+money(t.sub,c)+'</span></div><div><span>Tax ('+num(inv.tax)+'%)</span><span>'+money(t.tax,c)+'</span></div><div class="gt"><span>'+(paid?"Total paid":"Total due")+'</span><span>'+money(t.total,c)+'</span></div></div>'+
+  (b.payment?'<div class="notes"><b>Payment details</b>'+link(lines(b.payment))+'</div>':'')+
+  (inv.notes?'<div class="notes"><b>Notes</b>'+lines(inv.notes)+'</div>':'');
+ $("#su").setAttribute("aria-pressed",String(!paid));
+ $("#sp").setAttribute("aria-pressed",String(paid));
+ $("#late").textContent=(!paid&&inv.due&&inv.due<today())?"Overdue":"";
+ var sel=$("#pick");
+ sel.innerHTML=S.invoices.map(function(i){return '<option value="'+i.id+'">'+esc(i.number)+" – "+esc(clientOf(i).name||"No client")+(pnames(i).length?" / "+esc(pnames(i)[0])+(pnames(i).length>1?" +"+(pnames(i).length-1):""):"")+" – "+(i.status==="paid"?"Paid":"Unpaid")+'</option>'}).join("");
+ sel.value=S.cur;
+ document.title=inv.number+" – Invoice";
+ save();
+}
+
+$("#form").addEventListener("input",function(e){
+ var t=e.target,inv=cur();
+ if(t.id==="csel"){inv.clientId=t.value;var cc=findClient(t.value),pl=cc?cc.projects:[];inv.items.forEach(function(it){if(pl.indexOf(it.project)<0)it.project=pl.length===1?pl[0]:""});renderItems()}
+ else if(t.dataset.m){var cd=t.closest(".cl"),cx=findClient(cd.dataset.cid);if(cx){if(t.dataset.m==="projects")cx.projects=t.value.split("\n").map(function(s){return s.trim()}).filter(Boolean);else cx[t.dataset.m]=t.value;if(t.dataset.m==="name")cd.querySelector("summary").textContent=cx.name||"Unnamed client";if(t.dataset.m==="projects")renderItems()}}
+ else if(t.dataset.b)S.business[t.dataset.b]=t.value;
+ else if(t.dataset.f)inv[t.dataset.f]=t.dataset.f==="tax"?num(t.value):t.value;
+ else if(t.dataset.i){var row=t.closest(".row"),it=inv.items.filter(function(x){return x.id===row.dataset.id})[0];if(it)it[t.dataset.i]=t.dataset.i==="desc"||t.dataset.i==="project"?t.value:num(t.value)}
+ refresh();
+});
+$("#items").addEventListener("click",function(e){
+ if(!e.target.classList.contains("x"))return;
+ var inv=cur(),id=e.target.closest(".row").dataset.id;
+ inv.items=inv.items.filter(function(x){return x.id!==id});
+ if(!inv.items.length)inv.items.push({id:uid(),desc:"",qty:1,rate:0});
+ renderItems();refresh();
+});
+$("#add").onclick=function(){var cv=cur(),last=cv.items[cv.items.length-1];cv.items.push({id:uid(),project:last&&last.project||"",desc:"",qty:1,rate:0});renderItems();refresh();var d=document.querySelectorAll(".row .d");d[d.length-1].focus()};
+$("#cur").innerHTML=CURS.map(function(c){return '<option>'+c+'</option>'}).join("");
+$("#pick").onchange=function(e){S.cur=e.target.value;fill();refresh()};
+$("#new").onclick=function(){var n=blank();S.invoices.push(n);S.cur=n.id;fill();refresh()};
+$("#dup").onclick=function(){
+ var n=JSON.parse(JSON.stringify(cur())),t=today(),b=blank();
+ n.id=b.id;n.number=b.number;n.issue=t;n.due=plus(t,14);n.status="unpaid";n.paidOn="";
+ n.items.forEach(function(i){i.id=uid()});
+ S.invoices.push(n);S.cur=n.id;fill();refresh();
+};
+var armT;
+$("#del").onclick=function(){
+ var b=$("#del");
+ if(!b.classList.contains("arm")){b.classList.add("arm");b.textContent="Confirm delete";armT=setTimeout(disarm,3000);return}
+ disarm();
+ S.invoices=S.invoices.filter(function(i){return i.id!==S.cur});
+ if(!S.invoices.length)S.invoices.push(blank());
+ S.cur=S.invoices[S.invoices.length-1].id;fill();refresh();
+};
+function disarm(){clearTimeout(armT);var b=$("#del");b.classList.remove("arm");b.textContent="Delete"}
+$("#su").onclick=function(){setStatus(cur(),"unpaid");refresh()};
+$("#sp").onclick=function(){setStatus(cur(),"paid");refresh()};
+$("#print").onclick=function(){try{window.print()}catch(e){}};
+
+$("#clients").addEventListener("click",function(e){
+ var b=e.target.closest("[data-delc]");if(!b)return;
+ if(!b.dataset.arm){b.dataset.arm="1";b.textContent="Confirm delete";setTimeout(function(){delete b.dataset.arm;b.textContent="Delete client"},3000);return}
+ var id=b.closest(".cl").dataset.cid;
+ S.clients=S.clients.filter(function(x){return x.id!==id});
+ S.invoices.forEach(function(i){if(i.clientId===id)i.clientId=""});
+ renderClients();refresh();
+});
+$("#addc").onclick=function(){
+ var c={id:uid(),name:"New client",email:"",address:"",projects:[]};
+ S.clients.push(c);renderClients();refresh();
+ var d=document.querySelector('.cl[data-cid="'+c.id+'"]');d.open=true;var n=d.querySelector("input");n.focus();n.select();
+};
+$("#vd").onclick=function(){setView("dash")};
+$("#ve").onclick=function(){setView("edit")};
+$("#dnew").onclick=function(){
+ var e=S.invoices.filter(function(x){return totals(x).total===0&&!x.clientId})[0];
+ if(e)S.cur=e.id;else{var n=blank();S.invoices.push(n);S.cur=n.id}
+ setView("edit");
+};
+$("#fcl").onchange=function(e){F.client=e.target.value;renderDash()};
+$("#fstat").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;F.status=b.dataset.s;renderDash()});
+$("#dash").addEventListener("click",function(e){
+ var b=e.target.closest("[data-a]");if(!b)return;
+ var id=b.closest(".li").dataset.id,i=S.invoices.filter(function(x){return x.id===id})[0];if(!i)return;
+ if(b.dataset.a==="open"){S.cur=id;setView("edit")}
+ else if(b.dataset.a==="del"){
+  if(!b.dataset.arm){b.dataset.arm="1";b.classList.add("danger","arm");b.textContent="Confirm";setTimeout(function(){delete b.dataset.arm;b.classList.remove("danger","arm");b.textContent="Delete"},3000);return}
+  S.invoices=S.invoices.filter(function(x){return x.id!==id});
+  if(!S.invoices.length)S.invoices.push(blank());
+  if(!cur())S.cur=S.invoices[S.invoices.length-1].id;
+  save();renderDash();
+ }
+ else{setStatus(i,i.status==="paid"?"unpaid":"paid");save();renderDash()}
+});
+load();fill();refresh();setView(window.__open?"edit":"dash");
+</script>
+</body>
+</html>
